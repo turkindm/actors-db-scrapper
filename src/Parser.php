@@ -2,59 +2,25 @@
 
 namespace Src;
 
-use DOMAttr;
-use Symfony\Component\DomCrawler\Crawler;
+use DiDom\Document;
+use DiDom\Element;
 
 class Parser
 {
     public function run()
     {
-        $baseUrl = 'https://www.kinopoisk.ru';
-        $actorsUrl = $baseUrl . '/film/5051069/cast/';
+        $baseUrl = 'https://www.imdb.com';
+        $actorsUrl = $baseUrl . '/title/tt0499549/fullcredits?ref_=tt_cl_sm';
 
-        $options = [
-            'http' => [
-                'method' => "GET",
-                'header' => 'Accept-language: ru\r\n' .
-                    'Cookie: foo=bar\r\n' .
-                    'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/119.0.0.0 Safari/537.36',
-            ],
-        ];
-        $context = stream_context_create($options);
+        $document = new Document();
+        $document->loadHtmlFile($actorsUrl);
 
-//        $pageHtml = file_get_contents($actorsUrl, false, $context);
-        $pageHtml = file_get_contents('actors-page.html');
-
-        $crawler = new Crawler($pageHtml);
-
-        $links = [];
-        $actorsFound = false;
-        $items = $crawler->filter('.block_left')->children();
-        foreach ($items as $item) {
-            if ($actorsFound) {
-                if ($item->nodeName === 'div') {
-                    /** @var DOMAttr $attr */
-                    $attr = $item->attributes['class'];
-                    if (strstr($attr->value, 'dub')) {
-                        // get link
-                    }
-                }
-            }
-            if ($item->nodeName === 'a') {
-                if (!$item->hasAttributes()) {
-                    continue;
-                }
-
-                if ($actorsFound) {
-                    $actorsFound = false;
-                }
-
-                /** @var DOMAttr $attr */
-                $attr = $item->attributes['name'];
-                if ($attr->value === 'actor') {
-                    $actorsFound = true;
-                }
-            }
+        $actorPageUrls = [];
+        /** @var Element $actorsList */
+        $actorsList = $document->find('.cast_list')[0]; // на странице только один блок cast_list
+        foreach ($actorsList->find('.primary_photo') as $actor) {
+            $path = $actor->find('a')[0]->getAttribute('href');
+            $actorPageUrls[] = $baseUrl . $path;
         }
     }
 }
