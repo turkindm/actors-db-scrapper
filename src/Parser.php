@@ -23,6 +23,7 @@ class Parser
             ]
         ];
         $progress = $defaultProgress;
+
         if (file_exists($progressDumpFile)) {
             $progress = json_decode(file_get_contents($progressDumpFile), true) ?? $defaultProgress;
         }
